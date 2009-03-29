@@ -1,0 +1,105 @@
+
+import java.awt.*;
+import java.awt.event.*;
+a   b
+/**
+ * Sample JavaCC compiler
+ * 
+ * @author Atlantis Mao
+ * @version 1.01 03/17/09
+ */
+&
+public class Compiler extends JPanel implements DocumentListener {
+
+	private  static ResourceBundle resources;
+	private final static String EXIT_AFTER_PAINT = new String("-exit");
+	private static boolean exitAfterFirstPaint;
+	// private JEditorPane editorPane_1 = new JEditorPane();
+
+	static {
+		try {
+			resources = ResourceBundle.getBundle("resources.Notepad", Locale
+					.getDefault());
+		} catch (MissingResourceException mre) {
+			System.err.println("resources/Notepad.properties not found");
+			System.exit(1);
+		}
+	}
+
+import java.awt.*;
+import java.awt.event.*;
+/**
+ * Sample JavaCC compiler
+ * 
+ * @author Atlantis Mao
+ * @version 1.01 03/17/09
+ */
+
+public class Compiler extends JPanel implements DocumentListener {
+
+	private static ResourceBundle resources;
+	private final static String EXIT_AFTER_PAINT = new String("-exit");
+	private static boolean exitAfterFirstPaint;
+	/private JEditorPane editorPane_1 = new JEditorPane();
+
+	static {
+		try {
+			resources = ResourceBundle.getBundle("resources.Notepad", Locale
+					.getDefault());
+		} catch (MissingResourceException mre) {
+			System.err.println("resources/Notepad.properties not found");
+			System.exit(1);
+		}
+	}
+
+import java.awt.*;
+import java.awt.event.*;
+/**
+ * Sample JavaCC compiler
+ * 
+ * @author Atlantis Mao
+ * @version 1.01 03/17/09
+ */
+
+public class Compiler extends JPanel implements DocumentListener {
+
+	private static ResourceBundle resources;
+	private final static String EXIT_AFTER_PAINT = new String("-exit");
+	private static boolean exitAfterFirstPaint;
+	// private JEditorPane editorPane_1 = new JEditorPane();
+
+	static {
+		try {
+			resources = ResourceBundle.getBundle("resources.Notepad", Locale
+					.getDefault());
+		} catch (MissingResourceException mre) {
+			System.err.println("resources/Notepad.properties not found");
+			System.exit(1);
+		}
+	}
+
+import java.awt.*;
+import java.awt.event.*;
+/**
+ * Sample JavaCC compiler
+ * 
+ * @author Atlantis Mao
+ * @version 1.01 03/17/09
+ */
+
+public class Compiler extends JPanel implements DocumentListener {
+
+	private static ResourceBundle resources;
+	private final static String EXIT_AFTER_PAINT = new String("-exit");
+	private static boolean exitAfterFirstPaint;
+	/ private JEditorPane editorPane_1 = new JEditorPane();
+
+	static {
+		try {
+			resources = ResourceBundle.getBundle("resources.Notepad", Locale
+					.getDefault());
+		} catch (MissingResourceException mre) {
+			System.err.println("resources/Notepad.properties not found");
+			System.exit(1);
+		}
+	}

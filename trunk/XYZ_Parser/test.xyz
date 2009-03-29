@@ -1,0 +1,25 @@
+
+class Main{
+public static void main(String[] args){
+System.out.println(10);
+}
+}
+class G{
+public int get(int num){
+int a;
+a=2;
+return a+5;
+}
+}~~
+class H extends G{
+int i;
+boolean bol;/*
+double a;
+public int put(){
+i=1+2;
+i=12-3;
+i=2*7;
+bol=true && false;
+bol=1<2;
+return 10;
+}
