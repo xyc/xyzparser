@@ -87,7 +87,7 @@ TOKEN :
 | <PLUS:"+">
 | <MINUS:"-">
 | <MUL:"*">
-| <OPER:(<NOT>|<ASSIGN>|<AND>|<PLUS>|<LT>|<MINUS>|<MUL>)>
+//| <OPER:(<NOT>|<ASSIGN>|<AND>|<PLUS>|<LT>|<MINUS>|<MUL>)>
 }
 
 /* KEY WORDS */
@@ -152,7 +152,7 @@ TOKEN:{
 	<#ONE_LINE_COMMENT: "//"(~["\n", "\r"])*("\n"|"\r" |"\r\n")>
 |	<#LINES_COMMENT: "/*"((~["*"])|("*"(~["/"])))*"*/">
 |	<#FORMAL_COMMENT: "/**"((~["*"])|("*"(~["/"])))*"*/">
-|	<COMMENT:(<ONE_LINE_COMMENT>|<LINES_COMMENT>|<FORMAL_COMMENT>)>
+//|	<COMMENT:(<ONE_LINE_COMMENT>|<LINES_COMMENT>|<FORMAL_COMMENT>)>
 }
 
 /** Root production. */
@@ -183,7 +183,7 @@ void MainClass() : {}
 	<STRING><LBRACK><RBRACK><ID>
 	<RPAREN>
 	<LBRACE>
-	Statement()
+	(Statement())*
 	<RBRACE>
 	<RBRACE>
 ) #MainClass
@@ -195,128 +195,145 @@ void ClassDecl() : {}
 	<CLASS><ID>
 	(<EXTENDS><ID>)?
 	<LBRACE>
-	(VarDecl())*
-	(MethodDecl())*
+	(Body())*
 	<RBRACE>
 )	#ClassDecl
 }
 
+void Body() : {}
+{
+	VarDecl()
+	|MethodDecl()
+}
+
+
 void Statement() : {}
 {
-	<LBRACE>(Statement())*<RBRACE>
-	|<IF><LPAREN>Exp()<RPAREN>Statement()<ELSE>Statement()
+	LOOKAHEAD(6)<IF><LPAREN>Exp()<RPAREN>Statement()<ELSE>Statement()
+	|<IF><LPAREN>Exp()<RPAREN>Statement()
+	|<LBRACE> (Statement())* <RBRACE>
 	|<WHILE><LPAREN>Exp()<RPAREN>Statement()
-	/* Do.. while*/
-	|<DO><LBRACE>Statement()<RBRACE><WHILE><LPAREN>Exp()<RPAREN>
 	|<PRINT><LPAREN>Exp()<RPAREN><SEMI>
-	|<ID><ASSIGN>Exp()<SEMI>
+	|LOOKAHEAD(2)<ID><ASSIGN>Exp()<SEMI>
 	|<ID><LBRACK>Exp()<RBRACK><ASSIGN>Exp()<SEMI>
+	|<DO>Statement()<WHILE><LPAREN>Exp()<RPAREN>
 }
 
 void VarDecl() : {}
 {
-	Type() <ID><SEMI>
+	Type()<ID><SEMI>
 }
+
 
 void MethodDecl() : {}
 {
-<PUBLIC>Type()<ID><LPAREN>FormalList()<RPAREN>
-<LBRACE>
-(VarDecl())*
-(Statement())*
-<RETURN>Exp()<SEMI>
-<RBRACE>
+	<PUBLIC>Type()<ID><LPAREN>FormalList()<RPAREN>
+	<LBRACE>
+	(MethodBody())*
+	<RETURN>Exp()<SEMI>
+	<RBRACE>
+}
+
+void MethodBody() : {}
+{
+	LOOKAHEAD(VarDecl())VarDecl()
+	|Statement()
 }
 
 void FormalList() : {}
 {
-Type()
-<ID>
-(FormalRest())*
+	(Type()
+	<ID>
+	(FormalRest())*)?
 }
 
 void FormalRest() : {}
 {
-<COMMA>
-Type()
-<ID>
+	<COMMA>
+	Type()
+	<ID>
 }
 
 void Type() : {}
 {
-	(<INT>
+	LOOKAHEAD(2)<INT>
 	|<INT><LBRACK><RBRACK>
-	|<DOUBLE>
+	|LOOKAHEAD(2)<DOUBLE>
 	|<DOUBLE><LBRACK><RBRACK>
 	|<BOOLEAN>
 	|<ID>
-	)
 }
+
 
 void Exp() : {}
 {
-	<INTLITERAL>
-| <REALLITERAL>
-| <TRUE>
-| <FALSE>
-| <ID>
-| <THIS>
-| <OPER>
+	LOOKAHEAD(AndExp())AndExp()
+	|NewExp()
 }
 
-/*
-void outputStatisticsFile() :
-{Token t;
- HashMap<String,Integer> hash = new HashMap<String,Integer>();
-}
+void AndExp() : {}
 {
-	(<OPER>|<SIGN>
-	|(t=<KEYWORD>
-    {
-    	if(hash.containsKey(t.image))
-    		hash.put(t.image,hash.get(t.image)+1);
-    	else
-			hash.put(t.image,1);
-		
-    })
-    |(t=<ID>
-    {
-    	if(hash.containsKey(t.image))
-    		hash.put(t.image,hash.get(t.image)-1);
-    	else
-			hash.put(t.image,-1);
-    })
-    |<INTLITERAL>|<REALLITERAL>
-    )*
-    {
-    	try{
-	    	File outfile = new File("output.txt");
-	    	FileOutputStream ofstream = new FileOutputStream(outfile);
-	    	PrintStream p = new PrintStream( ofstream );
-	    	Set<String> s = hash.keySet(); 
-	    	
-	    	String output = "";
-            output += "KEYWORD:\n";
-
-            for(String sa: s){
-                    if(hash.get(sa)>0){
-                            output += sa+"  "+ hash.get(sa) + "\n";
-                    }
-            }
-            output += "\r\rID:\n";
-            for(String sa: s){
-                    if(hash.get(sa)<0){
-                            output += sa+"  "+(-hash.get(sa)) + "\n";
-                    }
-            }
-            p.println(output);
-        }
-        catch(FileNotFoundException e){
-                e.printStackTrace();
-        }
-        catch(IOException e){
-                e.printStackTrace();
-        }
-    }
+	NotExp()(<AND>NotExp())*
 }
-*/
+
+void NotExp() : {}
+{
+	(<NOT>)?LessExp()
+}
+
+void LessExp() : {}
+{
+	AddExp()(<LT>AddExp())*
+}
+
+void AddExp() : {}
+{
+	MultiExp()((<PLUS>|<MINUS>)MultiExp())*
+}
+
+void MultiExp() : {}
+{
+	SignExp()(<MUL>SignExp())*
+}
+
+void SignExp() : {}
+{
+	(<MINUS>)?Element()
+}
+
+void Element() : {}
+{
+	<INTLITERAL>
+	|<REALLITERAL>
+	|IdentifierExp()
+	|<TRUE>
+	|<FALSE>
+	|<LPAREN>Exp()<RPAREN>
+	|<THIS>
+}
+
+void NewExp() : {}
+{
+	<NEW>
+	(<INT><LBRACK>Exp()<RBRACK>
+	|<DOUBLE><LBRACK>Exp()<RBRACK>
+	|<ID><LPAREN><RPAREN>)	
+	|<ID>
+}
+
+void IdentifierExp() : {}
+{
+	LOOKAHEAD(3)NewExp()<DOT><ID>(<LPAREN>ExpList()<RPAREN>)?
+	|LOOKAHEAD(2)<ID><DOT><LENGTH>
+	|<ID>
+}
+
+void ExpList() : {}
+{
+	(Exp()(ExpRest())*)?
+}
+
+void ExpRest() : {}
+{
+	<COMMA>Exp()
+}
