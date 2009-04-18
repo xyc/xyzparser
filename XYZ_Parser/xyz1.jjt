@@ -1,0 +1,345 @@
+/* Copyright (c) 2006, Sun Microsystems, Inc.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright notice,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Sun Microsystems, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+ 
+/* Options. */
+options {
+   MULTI=true;
+   NODE_DEFAULT_VOID=true;
+   NODE_PREFIX="";
+}
+ 
+PARSER_BEGIN(XYZParser)
+
+import java.io.*;
+import java.util.*;
+
+/** XYZParser. */
+public class XYZParser {
+
+  /** Main entry point. */
+  public static void main(String args[]) throws ParseException {
+	try{
+			
+  	 	File file = new File("test.xyz");
+  		FileInputStream stream = new FileInputStream(file);
+        XYZParser parser = new XYZParser(stream);
+        
+        SimpleNode n = parser.parse();
+      	n.dump("");
+        
+        //parser.lexicalAnalyze();
+        stream.close();
+        
+        /*
+        stream = new FileInputStream(file);
+        parser.ReInit(stream);
+        parser.outputStatisticsFile();*/
+	}catch(Exception e){
+	  	e.printStackTrace();
+	  	}
+	  }
+}
+
+PARSER_END(XYZParser)
+
+/* WHITE SPACE */
+SKIP :
+{
+" "
+| "\t"
+| "\n"
+| "\r"
+| "\f"
+}
+
+/* OPERATIONS */
+TOKEN :
+{
+<NOT:"!">
+| <ASSIGN:"=">
+| <AND:"&&">
+| <LT:"<">
+| <PLUS:"+">
+| <MINUS:"-">
+| <MUL:"*">
+//| <OPER:(<NOT>|<ASSIGN>|<AND>|<PLUS>|<LT>|<MINUS>|<MUL>)>
+}
+
+/* KEY WORDS */
+TOKEN :
+{
+<PUBLIC:"public">
+| <CLASS:"class">
+| <EXTENDS:"extends">
+| <STATIC:"static">
+| <VOID:"void">
+| <MAIN:"main">
+| <STRING:"String">
+| <IF:"if">
+| <ELSE:"else">
+| <DO:"do">
+| <WHILE:"while">
+| <NEW:"new">
+| <LENGTH:"length">
+| <PRINT:"System.out.println">
+| <INT:"int">
+| <BOOLEAN:"boolean">
+| <TRUE:"true">
+| <FALSE:"false">
+| <THIS:"this">
+| <RETURN:"return">
+| <DOUBLE:"double">
+//| <KEYWORD:(<PUBLIC>|<CLASS>|<EXTENDS>|<STATIC>|<VOID>|<MAIN>|<STRING>|<IF>|<ELSE>|<DO>|<DOUBLE>
+//		   |<WHILE>|<NEW>|<LENGTH>|<PRINT>|<INT>|<BOOLEAN>|<TRUE>|<FALSE>|<THIS>|<RETURN>)>		//warning!
+}
+
+
+/* SEPARATORS  */
+TOKEN : {
+<LBRACE: "{">
+| <RBRACE: "}">
+| <LBRACK:"[">
+| <RBRACK:"]">
+| <LPAREN:"(">
+| <RPAREN:")">
+| <COMMA:",">
+| <SEMI:";">
+| <DOT:".">
+//| <SIGN:(<LBRACE>|<RBRACE>|<LBRACK>|<RBRACK>|<LPAREN>|<RPAREN>|<COMMA>|<SEMI>|<DOT>)>
+}
+
+/* LITERALS */
+TOKEN :
+{
+<INTLITERAL:(["0" - "9"])+>
+| <REALLITERAL:((["0"-"9"])+"."(["0"-"9"])*)|((["0"-"9"])*"."(["0"-"9"])+)>
+}
+
+
+/*IDENTIFIERS*/
+TOKEN :
+{
+<ID: (["a"-"z","A"-"Z"])(["a"-"z","A"-"Z","0"-"9","_"])*>
+}
+
+/* COMMENTS */
+TOKEN:{
+	<#ONE_LINE_COMMENT: "//"(~["\n", "\r"])*("\n"|"\r" |"\r\n")>
+|	<#LINES_COMMENT: "/*"((~["*"])|("*"(~["/"])))*"*/">
+|	<#FORMAL_COMMENT: "/**"((~["*"])|("*"(~["/"])))*"*/">
+//|	<COMMENT:(<ONE_LINE_COMMENT>|<LINES_COMMENT>|<FORMAL_COMMENT>)>
+}
+
+/** Root production. */
+SimpleNode parse()	#Root :
+{}
+{
+	Program()
+	<EOF>
+	{ return jjtThis; }
+}
+
+void Program() : {}
+{
+(
+	MainClass()
+	(ClassDecl())*
+) #Program
+}
+
+void MainClass() : {}
+{
+(
+	<CLASS><ID>
+	<LBRACE>
+	<PUBLIC><STATIC><VOID><MAIN>
+	<LPAREN>
+	<STRING><LBRACK><RBRACK><ID>
+	<RPAREN>
+	<LBRACE>
+	(Statement())*
+	<RBRACE>
+	<RBRACE>
+) #MainClass
+}
+
+void ClassDecl() : {}
+{
+(
+	<CLASS><ID>
+	(<EXTENDS><ID>)?
+	<LBRACE>
+	(Body())*
+	<RBRACE>
+)	#ClassDecl
+}
+
+void Body() : {}
+{
+	VarDecl()
+	|MethodDecl()
+}
+
+void VarDecl() : {}
+{
+	Type()<ID><SEMI>
+}
+
+void MethodDecl() : {}
+{
+	<PUBLIC>Type()<ID><LPAREN>FormalList()<RPAREN>
+	<LBRACE>
+	(MethodBody())*
+	<RETURN>Exp()<SEMI>
+	<RBRACE>
+}
+
+void MethodBody() : {}
+{
+	LOOKAHEAD(VarDecl())VarDecl()
+	|Statement()
+}
+
+void FormalList() : {}
+{
+	(Type()
+	<ID>
+	(FormalRest())*)?
+}
+
+void FormalRest() : {}
+{
+	<COMMA>
+	Type()
+	<ID>
+}
+
+void Type() : {}
+{
+	LOOKAHEAD(2)<INT><LBRACK><RBRACK>
+	|<INT>
+	|LOOKAHEAD(2)<DOUBLE><LBRACK><RBRACK>
+	|<DOUBLE>
+	|<BOOLEAN>
+	|<ID>
+}
+
+void Statement() : {}
+{
+	<LBRACE> (Statement())* <RBRACE>
+	|LOOKAHEAD(6)<IF><LPAREN>Exp()<RPAREN>Statement()<ELSE>Statement()
+	//|<IF><LPAREN>Exp()<RPAREN>Statement()  only if is not included?
+	|<WHILE><LPAREN>Exp()<RPAREN>Statement()
+	|<PRINT><LPAREN>Exp()<RPAREN><SEMI>
+	|LOOKAHEAD(2)<ID><ASSIGN>Exp()<SEMI>
+	|<ID><LBRACK>Exp()<RBRACK><ASSIGN>Exp()<SEMI>
+	|<DO>Statement()<WHILE><LPAREN>Exp()<RPAREN><SEMI>
+}
+
+void Exp() : {}
+{
+	LOOKAHEAD(AndExp())AndExp()
+	|NewExp()
+}
+
+void NewExp() : {}
+{
+	<NEW>
+	(<INT><LBRACK>Exp()<RBRACK>
+	|<DOUBLE><LBRACK>Exp()<RBRACK>
+	|<ID><LPAREN><RPAREN>)
+}
+
+void AndExp() : {}
+{
+	NotExp()(<AND>NotExp())*
+}
+
+void NotExp() : {}
+{
+	(<NOT>)?LessExp()
+}
+
+void LessExp() : {}
+{
+	AddExp()(<LT>AddExp())*
+}
+
+void AddExp() : {}
+{
+	MultiExp()((<PLUS>|<MINUS>)MultiExp())*
+}
+
+void MultiExp() : {}
+{
+	SignExp()(<MUL>SignExp())*
+}
+
+void SignExp() : {}
+{
+	(<MINUS>)?Element()
+}
+
+void Element() : {}
+{
+	<INTLITERAL>
+	|<REALLITERAL>
+	|<TRUE>
+	|<FALSE>
+	|IDExp()
+	|<LPAREN>Exp()<RPAREN>
+}
+
+void IDExp() : {}
+{
+	//LOOKAHEAD(3)NewExp()<DOT><ID>(<LPAREN>ExpList()<RPAREN>)?
+	//|LOOKAHEAD(2)<ID><DOT><LENGTH>
+	//|<ID>
+	(LOOKAHEAD(Object()<DOT>)Object()<DOT>)?
+	<ID>
+	(<LBRACK>Exp()<RBRACK>
+	|<DOT><LENGTH>
+	|<LPAREN>ExpList()<RPAREN>)?
+}
+
+void Object() : {}
+{
+	<THIS>
+	|<ID>
+	|<NEW><ID><LPAREN><RPAREN>
+}
+
+void ExpList() : {}
+{
+	(Exp()(ExpRest())*)?
+}
+
+void ExpRest() : {}
+{
+	<COMMA>Exp()
+}
