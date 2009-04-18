@@ -1,0 +1,19 @@
+<job id="makeFile">
+<?job debug="true"?>
+<script language="VBScript">
+        'WScript.Echo "This is VBScript"
+	Set WshShell = WScript.CreateObject("WScript.Shell")
+	'WshShell.Run "%windir%\notepad " & WScript.ScriptFullName
+Return = WshShell.Run("jjtree xyz.jjt",1,1)
+Return = WshShell.Run("javacc xyz.jj",1,1)
+	'WshShell.Run "javacc xyz.jj"
+
+' Delete all class
+Dim fso	
+Set fso = CreateObject("Scripting.FileSystemObject")
+fso.DeleteFile("*.class")
+	'WshShell.Run("del *.class")
+	WshShell.Run "javac *.java"
+	'WshShell.Run javacc xyz.jj
+</script>
+</job>

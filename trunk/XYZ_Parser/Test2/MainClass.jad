@@ -1,0 +1,24 @@
+// Decompiled by DJ v3.7.7.81 Copyright 2004 Atanas Neshkov  Date: 2009/4/17 17:07:17
+// Home Page : http://members.fortunecity.com/neshkov/dj.html  - Check often for new version!
+// Decompiler options: packimports(3) 
+// Source File Name:   MainClass.java
+
+
+public class MainClass extends SimpleNode
+{
+
+    public MainClass(int i)
+    {
+        super(i);
+    }
+
+    public MainClass(XYZParser xyzparser, int i)
+    {
+        super(xyzparser, i);
+    }
+
+    public Object jjtAccept(XYZParserVisitor xyzparservisitor, Object obj)
+    {
+        return xyzparservisitor.visit(this, obj);
+    }
+}
