@@ -30,130 +30,108 @@
 
 public class InfoVisitor implements XYZParserVisitor
 {
-	private int statementCount = 0;
-  private int indent = 0;
-  private int totalWeight = 0;
-  
   private ArrayList<ClassInfo> classInfos = new ArrayList<ClassInfo>();
   private ClassInfo classInfo;
+  private MethodInfo methodInfo;
 
   public Object visit(SimpleNode node, Object data){
-  	System.out.println(indentString() + node +
-                   ": acceptor not unimplemented in subclass?");
-    ++indent;
     data = node.childrenAccept(this, data);
-    --indent;
     return data;
   }
   public Object visit(Root node, Object data){
-  	 System.out.println(indentString() + node);
-    ++indent;
     data = node.childrenAccept(this, data);
-    --indent;
     return data;
   	}
   public Object visit(Program node, Object data)
   {
-  	 System.out.println(indentString() + node);
-    ++indent;
-    data = node.childrenAccept(this, data);
-    --indent;
-    
+    data = node.childrenAccept(this, data); 
     return data;
   }
   public Object visit(MainClass node, Object data)
     {
-  	 System.out.println(indentString() + node +":" + node.getText());
-    ++indent;
     
     classInfo = new ClassInfo();
     classInfo.setIsMainClass(true);
-    
-    
+    String classText = node.getText();
+    classInfo.setClassName(classText.substring(classText.lastIndexOf(' ')+1));
     
     data = node.childrenAccept(this, data);
     
     
     classInfos.add(classInfo);
     
-    
-      //weight = childrenWeight
-	    for(int i = 0; i < node.jjtGetNumChildren(); i++){
-	    	SimpleNode childNode = (SimpleNode)node.jjtGetChild(i);
-	    	node.setWeight(node.getWeight() + childNode.getWeight());
-	    }
-	    node.setWeight(node.getWeight());
-	    totalWeight += node.getWeight();
-    
-    --indent;
-    System.out.println(indentString() + "Weight = "+node.getWeight());
     return data;
   }
   public Object visit(ClassDecl node, Object data)
     {
-  	 System.out.println(indentString() + node +":" + node.getText());
-    ++indent;
+    
+    classInfo = new ClassInfo();
+    classInfo.setIsMainClass(false);
+    String classText = node.getText();
+    classInfo.setClassName(classText.substring(classText.lastIndexOf(' ')+1));
+    
     data = node.childrenAccept(this, data);
     
-    //weight = childrenWeight
-	    for(int i = 0; i < node.jjtGetNumChildren(); i++){
-	    	SimpleNode childNode = (SimpleNode)node.jjtGetChild(i);
-	    	node.setWeight(node.getWeight() + childNode.getWeight());
-	    }
-	    node.setWeight(node.getWeight());
-	    totalWeight += node.getWeight();
+    classInfos.add(classInfo);
 	    
     
-    --indent;
-    System.out.println(indentString() + "Weight = "+node.getWeight());
     return data;
   }
   
   public Object visit(VarDeclNode node, Object data){
-  		System.out.println(node.getText());
+  		
+  		VarInfo varInfo = new VarInfo();
+  		String varText = node.getText();
+  		varInfo.setVarName(varText.substring(varText.lastIndexOf(' ')+1));
+  		varInfo.setVarType(varText.substring(0, varText.indexOf(' ')));
+  		classInfo.addVarInfo(varInfo);
+  		
   		data = node.childrenAccept(this, data);
   		return data;
   }
   
     public Object visit(FormalListNode node, Object data){
-    	System.out.println(node.getText());
+    	VarInfo varInfo = new VarInfo();
+    	String varText = node.getText();
+    	varInfo.setVarName(varText.substring(varText.lastIndexOf(' ')+1));
+    	varInfo.setVarType(varText.substring(0, varText.indexOf(' ')));
+    	methodInfo.addFormalInfo(varInfo);
+    	
   		data = node.childrenAccept(this, data);
   		return data;
     	}
   public Object visit(FormalRestNode node, Object data){
-  	System.out.println(node.getText());
+  	
+  	VarInfo varInfo = new VarInfo();
+	String varText = node.getText();
+	varInfo.setVarName(varText.substring(varText.lastIndexOf(' ')+1));
+	varInfo.setVarType(varText.substring(0, varText.indexOf(' ')));
+	methodInfo.addFormalInfo(varInfo);
+  	
   		data = node.childrenAccept(this, data);
   		return data;
   	}
   
   public Object visit(MethodNode node, Object data){
-  		 System.out.println(indentString() + node + ":" + node.getText());
-    ++indent;
+    
+    methodInfo = new MethodInfo();
+    String methodText = node.getText();
+    methodInfo.setMethodName(methodText.substring(methodText.lastIndexOf(' ')+1));
+    methodInfo.setReturnType(methodText.substring(0, methodText.indexOf(' ')));
+    
     data = node.childrenAccept(this, data);
     
-    	//weight = childrenWeight
-	    for(int i = 0; i < node.jjtGetNumChildren(); i++){
-	    	SimpleNode childNode = (SimpleNode)node.jjtGetChild(i);
-	    	node.setWeight(node.getWeight() + childNode.getWeight());
-	    }
-	    node.setWeight(node.getWeight());
-    
-    --indent;
-    System.out.println(indentString() + "Weight = "+node.getWeight());
+    classInfo.addMethodInfo(methodInfo);
+
     return data;
   	}
   
   public Object visit(StatementNode node, Object data){
-  	System.out.println(indentString() + node);
-    ++indent;
     data = node.childrenAccept(this, data);
-    --indent;
     return data;
   }
 
 	  public Object visit(IfStatementNode node, Object data){
-	  	System.out.println(indentString() + node);
-	    ++indent;
 	    data = node.childrenAccept(this, data);
 	    
 	    //weight = 2 * childrenWeight
@@ -163,72 +141,27 @@ public class InfoVisitor implements XYZParserVisitor
 	    }
 	    node.setWeight(2*node.getWeight());	    
 	    
-	    --indent;
-	    System.out.println(indentString() + "Weight = "+node.getWeight());
 	    return data;
 	  }
 	  
   public Object visit(WhileStatementNode node, Object data){
-	  	System.out.println(indentString() + node);
-	    ++indent;
+
 	    data = node.childrenAccept(this, data);
-	    
-	    //weight = 4 * childrenWeight
-	    for(int i = 0; i < node.jjtGetNumChildren(); i++){
-	    	SimpleNode childNode = (SimpleNode)node.jjtGetChild(i);
-	    	node.setWeight(node.getWeight() + childNode.getWeight());
-	    }
-	    node.setWeight(4*node.getWeight());
-	    
-	    --indent;
-	    System.out.println(indentString() + "Weight = "+node.getWeight());
+
 	    return data;
   	}
 
 	public Object visit(SingleStatementNode node, Object data){
-			statementCount++;
-	  	System.out.println(indentString() + node);
-	    ++indent;
-	    
-	    //weight = 1
-	    node.setWeight(1);
-	    
+	       
 	    data = node.childrenAccept(this, data);
-	    --indent;
-	    System.out.println(indentString() + "Weight = "+node.getWeight());
 	    return data;
 		}
 		
 		public Object visit(ReturnStatementNode node, Object data){
-			statementCount++;
-	  	System.out.println(indentString() + node);
-	    ++indent;
-	    
-	    //weight = 1
-	    node.setWeight(1);
-	    
 	    
 	    data = node.childrenAccept(this, data);
-	    --indent;
-	    System.out.println(indentString() + "Weight = "+node.getWeight());
 	    return data;
 		}
-
-  private String indentString() {
-    StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < indent; ++i) {
-      sb.append(' ');
-    }
-    return sb.toString();
-  }
- 
- 	public int getStatementCount(){
- 			return statementCount;
- 		}
- 		
- 	public int getTotalWeight(){
- 			return totalWeight;
- 		}
  	
  	public ArrayList<ClassInfo> getClassInfos(){
  		return classInfos;	
