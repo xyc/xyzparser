@@ -1,0 +1,503 @@
+/* Copyright (c) 2006, Sun Microsystems, Inc.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright notice,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Sun Microsystems, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+ 
+/* Options. */
+options {
+   MULTI=true;
+   VISITOR=true;
+   NODE_DEFAULT_VOID=true;
+   NODE_PREFIX="";
+}
+ 
+PARSER_BEGIN(XYZParser)
+
+package ast;
+
+import java.io.*;
+import java.util.*;
+import semantic.*;
+
+
+/** XYZParser. */
+public class XYZParser {
+
+  /** Main entry point. */
+  public static void main(String args[]) throws ParseException {
+	try{
+			
+  	 	File file = new File("test.xyz");
+  		FileInputStream stream = new FileInputStream(file);
+        XYZParser parser = new XYZParser(stream);
+        
+        SimpleNode n = parser.parse();
+      	n.dump("");
+        
+        TypeCheckingVistor tcv = new TypeCheckingVistor();
+        n.jjtAccept(tcv, null);
+        
+        TestVisitor v = new TestVisitor();
+        n.jjtAccept(v, null);
+        System.out.println("StatementCount:"+v.getStatementCount());
+        System.out.println("TotalWeight:"+v.getTotalWeight());
+        
+        //parser.lexicalAnalyze();
+        stream.close();
+        
+        /*
+        stream = new FileInputStream(file);
+        parser.ReInit(stream);
+        parser.outputStatisticsFile();*/
+	}catch(Exception e){
+	  	e.printStackTrace();
+	  	}
+	  }
+}
+
+PARSER_END(XYZParser)
+
+/* WHITE SPACE */
+SKIP :
+{
+" "
+| "\t"
+| "\n"
+| "\r"
+| "\f"
+}
+
+/* OPERATIONS */
+TOKEN :
+{
+<NOT:"!">
+| <ASSIGN:"=">
+| <AND:"&&">
+| <LT:"<">
+| <PLUS:"+">
+| <MINUS:"-">
+| <MUL:"*">
+| <OPER:(<NOT>|<ASSIGN>|<AND>|<PLUS>|<LT>|<MINUS>|<MUL>)>
+}
+
+/* KEY WORDS */
+TOKEN :
+{
+<PUBLIC:"public">
+| <CLASS:"class">
+| <EXTENDS:"extends">
+| <STATIC:"static">
+| <VOID:"void">
+| <MAIN:"main">
+| <STRING:"String">
+| <IF:"if">
+| <ELSE:"else">
+| <DO:"do">
+| <WHILE:"while">
+| <NEW:"new">
+| <LENGTH:"length">
+| <PRINT:"System.out.println">
+| <INT:"int">
+| <BOOLEAN:"boolean">
+| <TRUE:"true">
+| <FALSE:"false">
+| <THIS:"this">
+| <RETURN:"return">
+| <DOUBLE:"double">
+| <KEYWORD:(<PUBLIC>|<CLASS>|<EXTENDS>|<STATIC>|<VOID>|<MAIN>|<STRING>|<IF>|<ELSE>|<DO>|<DOUBLE>
+		   |<WHILE>|<NEW>|<LENGTH>|<PRINT>|<INT>|<BOOLEAN>|<TRUE>|<FALSE>|<THIS>|<RETURN>)>		//warning!
+}
+
+
+/* SEPARATORS  */
+TOKEN : {
+<LBRACE: "{">
+| <RBRACE: "}">
+| <LBRACK:"[">
+| <RBRACK:"]">
+| <LPAREN:"(">
+| <RPAREN:")">
+| <COMMA:",">
+| <SEMI:";">
+| <DOT:".">
+| <SIGN:(<LBRACE>|<RBRACE>|<LBRACK>|<RBRACK>|<LPAREN>|<RPAREN>|<COMMA>|<SEMI>|<DOT>)>
+}
+
+/* LITERALS */
+TOKEN :
+{
+<INTLITERAL:(["0" - "9"])+>
+| <REALLITERAL:((["0"-"9"])+"."(["0"-"9"])*)|((["0"-"9"])*"."(["0"-"9"])+)>
+}
+
+
+/*IDENTIFIERS*/
+TOKEN :
+{
+<ID: (["a"-"z","A"-"Z"])(["a"-"z","A"-"Z","0"-"9","_"])*>
+}
+
+/* COMMENTS */
+TOKEN:{
+	<#ONE_LINE_COMMENT: "//"(~["\n", "\r"])*("\n"|"\r" |"\r\n")>
+|	<#LINES_COMMENT: "/*"((~["*"])|("*"(~["/"])))*"*/">
+|	<#FORMAL_COMMENT: "/**"((~["*"])|("*"(~["/"])))*"*/">
+|	<COMMENT:(<ONE_LINE_COMMENT>|<LINES_COMMENT>|<FORMAL_COMMENT>)>
+}
+
+/** Root production. */
+SimpleNode parse()	#Root :
+{}
+{
+	Program()
+	//(<INTLITERAL>|<REALLITERAL>|<ID>|<KEYWORD>|<SIGN>|<OPER>|<COMMENT>)*
+	<EOF>
+	{ return jjtThis; }
+}
+
+void Program() : {}
+{
+(
+	MainClass()
+	(ClassDecl())*
+) #Program
+}
+
+void MainClass()#MainClass : {Token t;}
+{
+	<CLASS>
+	t = ID()
+	<LBRACE>
+	<PUBLIC><STATIC><VOID><MAIN>
+	<LPAREN>
+	<STRING><LBRACK><RBRACK>ID()
+	<RPAREN>
+	<LBRACE>
+	(Statement())*
+	<RBRACE>
+	<RBRACE>
+
+{jjtThis.setText("class " + t.image);}
+}
+
+void ClassDecl()#ClassDecl : {Token t;}
+{
+	<CLASS>
+	t = ID()
+	(<EXTENDS>ID() #ExtendNode)?
+	<LBRACE>
+	(Body())*
+	<RBRACE>
+
+{jjtThis.setText("class " + t.image);}
+
+}
+
+void Body():{}
+{
+	VarDecl()
+	|MethodDecl()
+}
+
+
+void Statement()#void : {}
+{
+	//LOOKAHEAD(6)<IF><LPAREN>Exp()<RPAREN>Statement()<ELSE>Statement()
+	//|<IF><LPAREN>Exp()<RPAREN>Statement()
+	IfStatement()
+	|WhileStatement()
+	|StatementBlock()
+	|SingleStatement()
+	//|<PRINT><LPAREN>Exp()<RPAREN><SEMI>
+	//|LOOKAHEAD(2)<ID><ASSIGN>Exp()<SEMI>
+	//|<ID><LBRACK>Exp()<RBRACK><ASSIGN>Exp()<SEMI>
+	//|<WHILE><LPAREN>Exp()<RPAREN>Statement()
+	//|<DO>Statement()<WHILE><LPAREN>Exp()<RPAREN>
+}
+
+void IfStatement()#IfStatementNode : {}
+{
+	LOOKAHEAD(6)<IF><LPAREN>JudgeExp()<RPAREN>Statement()<ELSE>Statement()
+	|<IF><LPAREN>Exp()<RPAREN>Statement()
+}
+
+void WhileStatement()#WhileStatementNode : {}
+{
+	<WHILE><LPAREN>JudgeExp()<RPAREN>Statement()
+	|<DO>Statement()<WHILE><LPAREN>Exp()<RPAREN><SEMI>
+}
+
+void JudgeExp() #JudgeExpNode:{}{
+	Exp()
+}
+
+void StatementBlock() : {}
+{
+	<LBRACE> (Statement())* <RBRACE>
+}
+ 
+void SingleStatement() #SingleStatementNode: {}
+{
+	PrintStatement()|AssignStatement()
+}
+
+void PrintStatement() #PrintStatementNode : {}
+{
+<PRINT><LPAREN>Exp()<RPAREN><SEMI>
+}
+
+void AssignStatement() #AssignStatementNode : {}
+{
+	AssignLeft() <ASSIGN> AssignRight() <SEMI>
+}
+
+void AssignLeft() #AssignLeftNode:{Token t;}{
+	LOOKAHEAD(2)t = ID()	{jjtThis.setText(t.image);}	|
+	t = ID()<LBRACK>Exp()<RBRACK>	{jjtThis.setText(t.image);}
+}
+
+void AssignRight()#AssignRightNode:{}{
+	Exp()
+}
+
+void VarDecl() #VarDeclNode: { Token t; String type;}
+{
+	type = Type()
+	t=ID()<SEMI>
+	{jjtThis.setText(type + " " + t.image);	}
+}
+
+
+void MethodDecl()#MethodNode : {Token t; String type;}
+{
+	<PUBLIC>
+	type = Type()
+	t = ID()
+	<LPAREN>FormalList()<RPAREN>
+	<LBRACE>
+	(MethodBody())*
+	ReturnStatement()
+	<RBRACE>
+	{jjtThis.setText(type + " " + t.image);}
+}
+
+void MethodBody() : {}
+{
+	LOOKAHEAD(VarDecl())VarDecl()
+	|Statement()
+}
+
+void FormalList()#FormalListNode : {Token t;String type;}
+{
+	(
+	type = Type()
+	t= ID()
+	(FormalRest())*
+	{jjtThis.setText(type + " " + t.image);}
+	)?
+}
+
+void FormalRest()#FormalRestNode : {Token t;String type;}
+{
+	<COMMA>
+	type = Type()
+	t = ID()
+	
+	{jjtThis.setText(type + " " + t.image);}
+}
+
+void ReturnStatement()#ReturnStatementNode : {}
+{
+	<RETURN>Exp()<SEMI>
+}
+
+String Type(): {String type;}
+{
+	LOOKAHEAD(2)
+	type = PrimitiveType(){return type;}|
+	type = ObjectType()
+	{return type;}
+	//<INT>	{return "int";}
+	//|<INT><LBRACK><RBRACK>	{return "int []";}
+	//|LOOKAHEAD(2)<DOUBLE>	{return "double";}
+	//|<DOUBLE><LBRACK><RBRACK> {return "double []";}
+	//|<BOOLEAN>	{return "boolean";}
+	//|t = <ID>{return t.image;}
+}
+
+String PrimitiveType() #PrimitiveTypeNode:{Token t;}
+{
+	t = <INT>	{jjtThis.setText(t.image);return "int";}
+	|t = <DOUBLE>	{jjtThis.setText(t.image);return "double";}
+	|t = <BOOLEAN>	{jjtThis.setText(t.image);return "boolean";}
+}
+
+String ObjectType() #ObjectTypeNode : {Token t;}
+{
+	<INT><LBRACK><RBRACK>	{jjtThis.setText("int []");return "int []";}
+	|<DOUBLE><LBRACK><RBRACK> {jjtThis.setText("double []");return "double []";}
+	|t = ID(){jjtThis.setText(t.image);return t.image;}
+}
+
+void Exp() #ExpNode: {}
+{
+	LOOKAHEAD(AndExp())AndExp()
+	|NewExp()
+}
+
+//
+void NewExp() #NewExpNode : {}
+{
+	<NEW>
+	(IntArray()
+	|DoubleArray()
+	|ID()<LPAREN><RPAREN>)
+}
+
+void IntArray() #IntArrayNode:{}{
+	////Exp() should be AndExp()->whose type should be int
+	<INT><LBRACK>Exp()<RBRACK>
+}
+
+void DoubleArray() #DoubleArrayNode:{}{
+	////DoubleArrayNode type should be double
+	<DOUBLE><LBRACK>Exp()<RBRACK>
+}
+
+void AndExp() : {}
+{
+	////AndExpNode type should be boolean
+	NotExp()(<AND>NotExp() #AndExpNode(2))*
+}
+
+void NotExp() : {}
+{
+	////NotExpNode type should be boolean
+	(<NOT> #NotExpNode(1))?LessExp()
+}
+
+void LessExp() #LessExpNode(>1) : {}
+{
+	////type should be (assigned) boolean
+	AddExp()(<LT>AddExp()|MinusExp() )*
+}
+
+void AddExp()#AddExpNode(>1): {}
+{
+	////Type should be int or double
+	MultiExp()( <PLUS>MultiExp() )*
+}
+
+void MinusExp() #MinusExpNode(>1): {}
+{
+		MultiExp()(LOOKAHEAD(2)<MINUS>MultiExp() )*
+}
+
+void MultiExp() #MultiExpNode(>1): {}
+{
+	////Type should be int or double
+	//also OK.
+	//SignExp()(<MUL>SignExp()#MultiExpNode(=2) )*
+	SignExp()(<MUL>SignExp() )*
+}
+
+void SignExp() : {}
+{
+	////Type should be int or double
+	(<MINUS> #SignExpNode(1))?Element()
+}
+
+void Element() : {}
+{
+	//literals
+	LiteralConstant()
+	//Id expression
+	|IDExp()
+	//nested expression
+	|<LPAREN>Exp()<RPAREN>
+}
+
+void LiteralConstant() #LiteralConstantNode :{Token t;}{
+	////Type assigned accordingly
+	t = <INTLITERAL>{jjtThis.setType(Type.INTEGER);	jjtThis.setText(t.image);}
+	|t =<REALLITERAL>{jjtThis.setType(Type.DOUBLE); jjtThis.setText(t.image);}
+	|t =<TRUE>{jjtThis.setType(Type.BOOLEAN); jjtThis.setText(t.image);}
+	|t =<FALSE>{jjtThis.setType(Type.BOOLEAN); jjtThis.setText(t.image);}
+}
+
+void IDExp() #IDExpNode: {}
+{
+	//LOOKAHEAD(3)NewExp()<DOT><ID>(<LPAREN>ExpList()<RPAREN>)?
+	//|LOOKAHEAD(2)<ID><DOT><LENGTH>
+	//|<ID>
+	//(LOOKAHEAD(Object()<DOT>)Object()<DOT>)//?
+	Object()
+	
+	//ID()
+	
+	//[Exp]
+	(
+	  //ID should be int or double array
+	  //Exp() should be AndExp, type should be int
+	  <LBRACK>Exp()<RBRACK>	#IndexNode
+		//Object.length
+		////Type should be INT
+		|LOOKAHEAD(2)<DOT><LENGTH>				#DotLengthNode
+		//(a,b,c,d) invoke method
+		////Type should be Object.ID->function(ExpList.type)
+		|LOOKAHEAD(2)<DOT>ID()<LPAREN>ExpList()<RPAREN>	#InvokeFunctionNode
+	)?
+}
+
+void Object()  : {}
+{
+	This()
+	|ID()
+	|NewExp()
+}
+
+Token ID() #IDNode:{Token t;}{
+	t = <ID>
+	{ 
+		jjtThis.setLineNum(t.beginLine);
+		jjtThis.setText(t.image);
+		return t;
+	}
+}
+
+void This() #ThisNode:{}{
+	<THIS>
+}
+
+void ExpList() : {}
+{
+	(Exp()(ExpRest())*)?
+}
+
+void ExpRest() : {}
+{
+	<COMMA>Exp()
+}
