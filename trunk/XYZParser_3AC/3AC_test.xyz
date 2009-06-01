@@ -1,0 +1,74 @@
+class Factorial {
+    public static void main(String[] a) {
+        System.out.println(1.0);
+    }
+}
+class Fac {
+	boolean a;
+	double b;
+	Fac c;
+	int[] e;
+    public int ComputeFac(int num, double num1, Fac c) {
+        int num_aux;
+		Fac f;
+		num_aux = this.length - -num * -1.0;
+       
+		while(3<2){
+		num_aux = -1+ num * 1.0 * 2.0;
+ 		if (num < 1)
+		{
+            num_aux = 1.0 * -2 + 3 * 2.3 + num * 1.0 * 2.0;
+			num_aux = new A();
+
+			if((3+2)<4 && e[2]<4){
+				num_aux = 1+ num * 1.0 * 2.0;
+			}
+			else{
+            	num_aux = e[3+2];
+		
+			}
+			num_aux = 1.0 * 2 + 3 * 2.3 + num * new Fac().length * f.ComputeFac(1,2,3);
+			if(!true && a[a+a]<a && a<(3+2)){
+				num_aux = 1+ num * 1.0 * e[2.0+2*e];
+			}
+			else{
+            	a = f.ComputeFac(1,2,3) + a[a];
+		
+			}
+
+		}
+        else{
+
+            num_aux = num * 1.0 +1;
+			do{
+				a = a;
+			}
+			while(!true);
+
+			while(1<2 && 2<3){
+				a = 3;
+			}
+
+			
+			if(!true && 2<3){
+				num_aux = 1+ num * 1.0 * 2.0;
+				if(!true){
+					num_aux = 1+ num * 1.0 * 2.0;
+				}
+				else{
+            		num_aux = a;
+		
+				}
+			}
+			else{
+            	num_aux = 1;
+		
+			}
+		}
+            num_aux = 1+ num + 1.0; 
+		}
+        return num_aux;
+    }
+}
+
+    
