@@ -1,0 +1,70 @@
+class Factorial {
+    public static void main(String[] a) {
+        System.out.println(1.0);
+    }
+}
+class Fac {
+	boolean a;
+	double [] b;
+	Fac c;
+    public int ComputeFac(int num, double num, Fac c) {
+        int num_aux;
+		Fac f;
+		num_aux = 1 + 1;
+        if (!(num < 1))
+            num_aux = 1.0 + 1;
+        else
+            num_aux = num * (this.ComputeFac(1.0, 1.0, f));
+        return num_aux;
+    }
+    public int ComputeFac(int num, double num, Fac c) {
+
+        int num_aux;
+
+		Fac f;
+        if (!(num < 1))
+
+            num_aux = 1.0;
+
+        else
+
+            num_aux = num * (this.ComputeFac(1.0, 1.0, f));
+
+        return num_aux;
+
+    }
+
+    public int ComputeFac(double num, int num, Fac c) {
+
+        double num_aux;
+
+        if (!(num < 1))
+
+            undefined_var = 1;
+
+        else
+
+            num_aux = num * (this.ComputeFac(b, 1, c));
+
+        return num_aux;
+
+    }
+    public boolean ComputeFac(double [] num, int num) {
+
+
+        return false;
+
+    }
+
+	int a;
+}
+class Test {
+	Fac f;
+	boolean b;
+	public boolean test(double [] flag){
+		int a;
+		a = f.ComputeFac(1.0, 1, f);
+		b = f.ComputeFac(flag, 1);
+		return b;
+	}
+}
