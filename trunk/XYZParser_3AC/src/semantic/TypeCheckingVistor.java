@@ -228,8 +228,17 @@ public class TypeCheckingVistor implements XYZParserVisitor {
 				.getDescriptor(Symbol.createSymbol(n.getText()));
 		currentMethodDescriptor = currentClassDescriptor.methodSymbolTable
 				.getDescriptor("main");
+		
+		tacInfo.content += "\nMain Class " + n.getText() + ": \n\n";
+		tacInfo.content += "Main Method: \n\n";
+		
+
+		tacInfo.content += "Push Stack\n";
 
 		data = node.childrenAccept(this, data);
+		
+
+		tacInfo.content += "Pop Stack\n";
 		return null;
 	}
 
@@ -239,6 +248,7 @@ public class TypeCheckingVistor implements XYZParserVisitor {
 		currentClassDescriptor = programDescriptor.classSymbolTable
 				.getDescriptor(Symbol.createSymbol(n.getText()));
 
+		tacInfo.content += "\nClass " + n.getText() + ": \n\n";
 		data = node.childrenAccept(this, data);
 		return null;
 	}
@@ -624,10 +634,17 @@ public class TypeCheckingVistor implements XYZParserVisitor {
 		}
 		this.curMethodName = id;
 		
+		tacInfo.content += "\nMethod " + id + " : \n\n";
+		tacInfo.content += "Push Stack\n";
+		
 		data = node.childrenAccept(this, data);
+		
+		tacInfo.content += "Pop Stack\n";
 		
 		curMethodName = "";
 		fomalTypes.clear();
+		
+		
 		return data;
 		//currentMethodDescriptor = currentClassDescriptor.methodSymbolTable.getDescriptor(idNode.getText());
 		
